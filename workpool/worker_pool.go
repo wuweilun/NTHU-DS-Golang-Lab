@@ -47,8 +47,9 @@ func (wp *workerPool) Start(ctx context.Context) {
 
 	defer close(wp.results)
 
+	wp.wg.Add(wp.numWorkers)
+	//print(wp.numWorkers)
 	for i := 0; i < wp.numWorkers; i++ {
-		wp.wg.Add(1)
 		go wp.run(ctx)
 	}
 	// Wait until all jobs(numWorkers) are done
@@ -73,14 +74,15 @@ func (wp *workerPool) run(ctx context.Context) {
 
 	for {
 		select{
-		case ctx <-ctx.Done():
+		case <-ctx.Done():
 			return
 		default:
 			task, ok := <-wp.tasks
 			if ok {
 				wp.results <- task.Func(task.Args...)
+			} else {
+				return 
 			}
-			return 
 		}
 	}
 }
